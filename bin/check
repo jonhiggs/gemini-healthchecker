@@ -1,12 +1,22 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
 ROOT_DIR="$(dirname "$0")/.."
 CONFIG=${ROOT_DIR}/etc/endpoints.json
+
+MAIL_CMD="msmtp -a fastmail --from=gemini-healthchecker@shit.cx"
+LOG_LEVEL=debug
+DRY_MODE=true
+
 ENDPOINT_IDS=( $(jq -r .[].id "${CONFIG}") )
-DEBUG=true
 
 _debug() {
-  if ${DEBUG}; then
-    echo "debug: $*"
+  [[ ${LOG_LEVEL} == "debug" ]] && echo "$1: $2" || true
+}
+
+_info() {
+  if [[ ${LOG_LEVEL} == "debug" ]] || [[ ${LOG_LEVEL} == "info" ]]; then
+    echo "$1: $2"
   fi
 }
 
@@ -15,12 +25,12 @@ _fetch_config() {
 }
 
 _lock() {
-  _debug "locking $1 for $2 seconds"
-  redis-cli SET "L-$1" "lock" EX "$2" >/dev/null
+  _debug $1 "locking for $2 seconds"
+  redis-cli SET "L-$1" "lock" EX "$2" >/dev/null || true
 }
 
 _locked() {
-  #_debug "checking for lock on $1"
+  _debug $1 "checking for lock"
   [[ -n "$(redis-cli --raw get "L-$1")" ]]
   return $?
 }
@@ -35,10 +45,10 @@ _fail() {
   retries=$(_fetch_config "$1" | jq .retries)
   check_frequency=$(_fetch_config "$1" | jq .check_frequency)
 
-  _debug "recording failure #${count} of $1"
+  _info $1 "recording failure #${count}"
 
   if [[ "${count}" -lt "${retries}" ]]; then
-    _debug "checking $1 for quick recovery"
+    _info $1 "checking for quick recovery"
     _lock "$1" 5
   elif [[ "${count}" -eq "${retries}" ]]; then
     _raise_failure_alarm "$1"
@@ -49,24 +59,35 @@ _fail() {
 }
 
 _raise_failure_alarm() {
-  local email
-  email=$(_fetch_config "$1" | jq .email)
-  _debug "notifying ${email} that check $1 is in an alarm state"
+  local target
+  target="$(_fetch_config "$1" | jq -r .target)"
+  _send_email "$1" \
+    "Failure of ${target} was detected" \
+    "${target} has entered an alarm state"
 }
 
 _raise_recovery_alarm() {
+  local target
   local failures
-  local email
+  target="$(_fetch_config "$1" | jq .target)"
   failures=$(redis-cli --raw GET "F-$1")
-  email=$(_fetch_config "$1" | jq .email)
-  _debug "notifying ${email} that check recovered after ${failures} failures"
+  _send_email "$1" \
+    "Recovery of ${target} was detected" \
+    "${target} has recovered after ${failures} failed checks"
+}
+
+_send_email() {
+  local email
+  email="$(_fetch_config "$1" | jq -r .email)"
+  _info $1 "notifying ${email} that $3"
+  echo -e "Subject: $2\n\n$3" | ${MAIL_CMD} -- ${email}
 }
 
 _succeed() {
   local count
   count=$(redis-cli --raw GET "F-$1")
   if [[ ${count} -gt 0 ]] && [[ ${count} -lt 5 ]]; then
-    _debug "a quick recovery of $1 was achieved"
+    _info $1 "a quick recovery was achieved"
   elif [[ ${count} -ge 5 ]]; then
     _raise_recovery_alarm "$1"
   fi
@@ -76,11 +97,16 @@ _succeed() {
 }
 
 _test() {
-  local uri
-  uri="$(_fetch_config "$1" | jq -r .uri)"
-  _debug "testing ${uri} for $1"
-  [[ $(gmni -I "$uri" | awk '{ print $1 }') -eq 20 ]]
-  return $?
+  local target
+  target="$(_fetch_config "$1" | jq -r .target)"
+  _info $1 "testing ${target}"
+  if ${DRY_MODE}; then
+    _info $1 "testing using dry mode"
+    return $((RANDOM%3))
+  else
+    [[ $(gmni -j once -I "$target" 2> /dev/null | awk '{ print $1 }') -eq 20 ]]
+    return $?
+  fi
 }
 
 while true; do
