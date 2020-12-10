@@ -76,11 +76,11 @@ _succeed() {
 }
 
 _test() {
-  _debug "testing $1"
-  return $((RANDOM%3))
-  #[[ $(gmni -I "$1" | awk '{ print $1 }') -eq 20 ]]
-  #return $?
   local uri
+  uri="$(_fetch_config "$1" | jq -r .uri)"
+  _debug "testing ${uri} for $1"
+  [[ $(gmni -I "$uri" | awk '{ print $1 }') -eq 20 ]]
+  return $?
 }
 
 while true; do
