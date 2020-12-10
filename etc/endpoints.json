@@ -1,0 +1,9 @@
+[
+  {
+    "id": "2949fe9b-d344-4121-9175-a849589168d4",
+    "uri": "gemini://shit.cx/",
+    "email": "jon@shit.cx",
+    "check_frequency": 10,
+    "retries": 5
+  }
+]
