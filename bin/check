@@ -65,7 +65,7 @@ _raise_recovery_alarm() {
 _succeed() {
   local count
   count=$(redis-cli --raw GET "F-$1")
-  if [[ ${count} -lt 5 ]]; then
+  if [[ ${count} -gt 0 ]] && [[ ${count} -lt 5 ]]; then
     _debug "a quick recovery of $1 was achieved"
   elif [[ ${count} -ge 5 ]]; then
     _raise_recovery_alarm "$1"
