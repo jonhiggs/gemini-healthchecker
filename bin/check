@@ -6,22 +6,22 @@ DEBUG=true
 
 _debug() {
   if ${DEBUG}; then
-    echo "debug: $@"
+    echo "debug: $*"
   fi
 }
 
 _fetch_config() {
-  jq --arg id $1 '.[] | select(.id == $id)' "${CONFIG}"
+  jq --arg id "$1" '.[] | select(.id == $id)' "${CONFIG}"
 }
 
 _lock() {
   _debug "locking $1 for $2 seconds"
-  redis-cli SET "L-$1" "lock" EX $2 >/dev/null
+  redis-cli SET "L-$1" "lock" EX "$2" >/dev/null
 }
 
 _locked() {
   #_debug "checking for lock on $1"
-  [[ -n $(redis-cli --raw get L-$1) ]]
+  [[ -n "$(redis-cli --raw get "L-$1")" ]]
   return $?
 }
 
@@ -29,30 +29,30 @@ _fail() {
   redis-cli INCR "F-$1" >/dev/null
   local count
   count=$(redis-cli --raw GET "F-$1")
-  retries=$(_fetch_config $1 | jq .retries)
-  check_frequency=$(_fetch_config $1 | jq .check_frequency)
+  retries=$(_fetch_config "$1" | jq .retries)
+  check_frequency=$(_fetch_config "$1" | jq .check_frequency)
 
   _debug "recording failure #${count} of $1"
 
-  if [[ ${count} -lt ${retries} ]]; then
+  if [[ "${count}" -lt "${retries}" ]]; then
     _debug "checking $1 for quick recovery"
-    _lock $1 5
-  elif [[ ${count} -eq ${retries} ]]; then
-    _raise_failure_alarm $1
-    _lock $1 ${check_frequency}
+    _lock "$1" 5
+  elif [[ "${count}" -eq "${retries}" ]]; then
+    _raise_failure_alarm "$1"
+    _lock "$1" "${check_frequency}"
   else
-    _lock $1 ${check_frequency}
+    _lock "$1" "${check_frequency}"
   fi
 }
 
 _raise_failure_alarm() {
-  email=$(_fetch_config $1 | jq .email)
+  email=$(_fetch_config "$1" | jq .email)
   _debug "notifying ${email} that check $1 is in an alarm state"
 }
 
 _raise_recovery_alarm() {
   failures=$(redis-cli --raw GET "F-$1")
-  email=$(_fetch_config $1 | jq .email)
+  email=$(_fetch_config "$1" | jq .email)
   _debug "notifying ${email} that check recovered after ${failures} failures"
 }
 
@@ -61,15 +61,14 @@ _succeed() {
   if [[ ${count} -lt 5 ]]; then
     _debug "a quick recovery of $1 was achieved"
   elif [[ ${count} -ge 5 ]]; then
-    _raise_recovery_alarm $1
+    _raise_recovery_alarm "$1"
   fi
 
   redis-cli SET "F-$1" 0 >/dev/null
-  _lock $1 $(_fetch_config $1 | jq .check_frequency)
+  _lock "$1" "$(_fetch_config "$1" | jq .check_frequency)"
 }
 
 _test() {
-  uri=$(_fetch_config $1 | jq .uri)
   _debug "testing $1"
   return $((RANDOM%3))
   #[[ $(gmni -I "$1" | awk '{ print $1 }') -eq 20 ]]
@@ -77,13 +76,13 @@ _test() {
 }
 
 while true; do
-  for id in ${ENDPOINT_IDS[@]}; do
-    _locked $id && continue
+  for id in "${ENDPOINT_IDS[@]}"; do
+    _locked "$id" && continue
 
     if _test "$id"; then
-      _succeed $id
+      _succeed "$id"
     else
-      _fail $id
+      _fail "$id"
     fi
   done
   sleep 1
