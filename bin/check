@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(dirname "$0")/.."
 CONFIG=${ROOT_DIR}/etc/endpoints.json
 
-MAIL_CMD="msmtp -a fastmail --from=gemini-healthchecker@shit.cx"
+MAIL_CMD="msmtp --from=gemini-healthchecker@shit.cx"
 LOG_LEVEL=debug
 DRY_MODE=true
 
