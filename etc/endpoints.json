@@ -3,14 +3,14 @@
     "id": "2949fe9b-d344-4121-9175-a849589168d4",
     "target": "gemini://shit.cx/",
     "email": "jon@shit.cx",
-    "check_frequency": 10,
+    "check_frequency": 60,
     "retries": 5
   },
   {
     "id": "e5f32439-cbb8-4d13-b70e-8d2ee7cbc0fe",
     "target": "gemini://gemini.bortzmeyer.org/",
     "email": "jon@shit.cx",
-    "check_frequency": 10,
+    "check_frequency": 60,
     "retries": 5
   }
 ]

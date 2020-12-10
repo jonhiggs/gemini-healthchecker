@@ -5,8 +5,8 @@ ROOT_DIR="$(dirname "$0")/.."
 CONFIG=${ROOT_DIR}/etc/endpoints.json
 
 MAIL_CMD="msmtp --from=gemini-healthchecker@shit.cx"
-LOG_LEVEL=debug
-DRY_MODE=true
+LOG_LEVEL=info
+DRY_MODE=false
 
 ENDPOINT_IDS=( $(jq -r .[].id "${CONFIG}") )
 
@@ -104,7 +104,7 @@ _test() {
     _info $1 "testing using dry mode"
     return $((RANDOM%3))
   else
-    [[ $(gmni -j once -I "$target" 2> /dev/null | awk '{ print $1 }') -eq 20 ]]
+    [[ $(${ROOT_DIR}/bin/gmni -j once -I "$target" 2> /dev/null | awk '{ print $1 }') -eq 20 ]]
     return $?
   fi
 }
