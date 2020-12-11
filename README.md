@@ -1,17 +1,21 @@
 # gemini-healthcheck
 
-A lightweight tool to check that a set Gemini targets are online. Notification emails are sent to the site owner when a failure is detected.
+A lightweight tool to check that Gemini targets are online and notify their owner when they aren't.
 
-The intent is to allow hosts serving Gemini content to easily check the health of themselves and each other. With at least two hosts checking that your content is online, you can be fairly sure you will be notified in the event of a failure.
+All targets are expected to respond with 20 within its timeout.
 
+This tool does not, and will not do any of the following:
 
-## Features
+- Providing any any hint about why a request failed.
+- Check targets on protocols other than Gemini.
+- Perform certificate checks.
+- Verifying page content.
 
-- Only raises notifications after a few consecutive failures.
-- Notifications are only sent by email.
-- Check frequency is configurable per target.
-- A generated gemtext page showing the status of all targets.
+When a failure is detected, it quickly checks a few more times to rule out a transient error, then sends a notification email to the site's owner.
 
+## Status Page
+
+A Gemtext page can be generated to show the status of all configured targets.
 
 ## Requirements
 
@@ -47,7 +51,6 @@ StandardOutput=file:/var/log/healthchecker/output
 WantedBy=default.target
 ```
 
-1. Generate the status page in a cronjob (`make content/index.gmi`
+1. Generate the status page in a cronjob (`make content/index.gmi`)
 1. Serve `content/index.gmi`
-
 
