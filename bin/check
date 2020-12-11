@@ -71,7 +71,7 @@ _raise_recovery_alarm() {
   target="$(_fetch_config "$1" | jq -r .target)"
   _send_email "$1" \
     "Recovery of ${target} was detected" \
-    "${target} has recovered since failing at $(_last_success)."
+    "${target} has recovered since failing at $(_last_success $1)."
 }
 
 _last_success() {
