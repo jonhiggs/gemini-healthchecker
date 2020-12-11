@@ -43,13 +43,14 @@ _fail() {
   local check_frequency
   count=$(redis-cli --raw GET "F-$1")
   retries=$(_fetch_config "$1" | jq .retries)
+  retry_rate=$(_fetch_config "$1" | jq .retry_rate)
   check_frequency=$(_fetch_config "$1" | jq .check_frequency)
 
   _info $1 "recording failure #${count}"
 
   if [[ "${count}" -lt "${retries}" ]]; then
     _info $1 "checking for quick recovery"
-    _lock "$1" 5
+    _lock "$1" "${retry_rate}"
   elif [[ "${count}" -eq "${retries}" ]]; then
     _raise_failure_alarm "$1"
     _lock "$1" "${check_frequency}"
