@@ -31,7 +31,7 @@ _lock() {
 
 _locked() {
   _debug $1 "checking for lock"
-  [[ -n "$(redis-cli --raw get "L-$1")" ]]
+  [[ -n "$(redis-cli --raw GET "L-$1")" ]]
   return $?
 }
 
@@ -68,12 +68,14 @@ _raise_failure_alarm() {
 
 _raise_recovery_alarm() {
   local target
-  local failures
   target="$(_fetch_config "$1" | jq -r .target)"
-  failures=$(redis-cli --raw GET "F-$1")
   _send_email "$1" \
     "Recovery of ${target} was detected" \
-    "${target} has recovered after ${failures} failed checks"
+    "${target} has recovered since failing at $(_last_success)."
+}
+
+_last_success() {
+  date -u --date="@$(redis-cli --raw GET "LS-$1")" --iso-8601=seconds
 }
 
 _send_email() {
@@ -93,6 +95,7 @@ _succeed() {
   fi
 
   redis-cli SET "F-$1" 0 >/dev/null
+  redis-cli SET "LS-$1" "$(date +%s)" >/dev/null  # last success
   _lock "$1" "$(_fetch_config "$1" | jq .check_frequency)"
 }
 
@@ -100,6 +103,7 @@ _test() {
   local target
   target="$(_fetch_config "$1" | jq -r .target)"
   _info $1 "testing ${target}"
+  redis-cli SET "LT-$1" "$(date +%s)" >/dev/null  # last test
   if ${DRY_MODE}; then
     _info $1 "testing using dry mode"
     return $((RANDOM%3))
