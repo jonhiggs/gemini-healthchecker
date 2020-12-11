@@ -15,6 +15,6 @@
     "check_frequency": 60,
     "retries": 3,
     "retry_rate": 5,
-    "timeout": 1
+    "timeout": 5
   }
 ]
