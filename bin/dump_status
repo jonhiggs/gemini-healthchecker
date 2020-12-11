@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 ROOT_DIR="$(dirname "$0")/.."
-CONFIG=${ROOT_DIR}/etc/endpoints.json
+CONFIG=${ROOT_DIR}/etc/targets.json
+NOW=$(date +%s)
 
 ENDPOINT_IDS=( $(jq -r .[].id "${CONFIG}") )
 
@@ -10,9 +11,9 @@ ENDPOINT_IDS=( $(jq -r .[].id "${CONFIG}") )
   for i in ${ENDPOINT_IDS[@]}; do
     target=$(jq -r --arg i $i '.[] | select(.id==$i) | .target' "${CONFIG}")
     failures=$(redis-cli --raw MGET F-$i)
-    last_test=$(date -u --iso-8601=seconds --date=@$(redis-cli --raw MGET LT-$i) | sed 's/\+.*//')
-    last_success=$(date -u --iso-8601=seconds --date=@$(redis-cli --raw MGET LS-$i) | sed 's/\+.*//')
+    last_test=$((NOW-$(redis-cli --raw MGET LT-$i)))
+    last_success=$((NOW-$(redis-cli --raw MGET LS-$i)))
 
-    echo -e "${target}\t${failures}\t${last_test}\t${last_success}"
+    echo -e "${target}\t${failures}\t${last_test}s\t${last_success}s"
   done | sort
 ) | column -s $'\t' -t

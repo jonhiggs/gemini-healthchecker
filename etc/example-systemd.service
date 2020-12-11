@@ -1,0 +1,12 @@
+[Unit]
+Description=Gemini Healthchecker
+
+[Service]
+Type=simple
+ExecStart=/home/healthchecker/src/gemini-healthchecker/bin/check
+Restart=on-failure
+StandardOutput=file:/var/log/healthchecker/output
+
+[Install]
+WantedBy=default.target
+

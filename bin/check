@@ -2,13 +2,13 @@
 set -euo pipefail
 
 ROOT_DIR="$(dirname "$0")/.."
-CONFIG=${ROOT_DIR}/etc/endpoints.json
+TARGETS=${ROOT_DIR}/etc/targets.json
 
 MAIL_CMD="msmtp --from=gemini-healthchecker@shit.cx"
 LOG_LEVEL=info
 DRY_MODE=false
 
-ENDPOINT_IDS=( $(jq -r .[].id "${CONFIG}") )
+ENDPOINT_IDS=( $(jq -r .[].id "${TARGETS}") )
 
 _debug() {
   [[ ${LOG_LEVEL} == "debug" ]] && echo "$1: $2" || true
@@ -21,7 +21,7 @@ _info() {
 }
 
 _fetch_config() {
-  jq --arg id "$1" '.[] | select(.id == $id)' "${CONFIG}"
+  jq --arg id "$1" '.[] | select(.id == $id)' "${TARGETS}"
 }
 
 _lock() {
