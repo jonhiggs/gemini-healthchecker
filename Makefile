@@ -13,13 +13,13 @@ failing_checks:
 
 content/index.gmi: DATE = $(shell date -u --iso-8601=seconds | sed 's/\+.*//g')
 content/index.gmi: .FORCE
-	echo -e "# healthcheck.shit.cx\n" > $@
-	echo -e "This page shows the health of all targets checked. If you would like to receive an email when a failure of Gemini Capsule is detected, please send an email to jon@shit.cx." >> $@
-	echo '```' >> $@
-	./bin/dump_status >> $@
-	echo '```' >> $@
-	echo -e '\n=> https://git.sr.ht/~jonhiggs/gemini-healthchecker/ The source to run your own gemini-healthchecker can be found at https://git.sr.ht/~jonhiggs/gemini-healthchecker/.' >> $@
-	echo -e '\nThis page was last updated at ${DATE}.' >> $@
+	@echo -e "# healthcheck.shit.cx\n" > $@
+	@echo -e "This page shows the health of all targets checked. If you would like to receive an email when a failure of Gemini Capsule is detected, please send an email to jon@shit.cx." >> $@
+	@echo '```' >> $@
+	@./bin/dump_status >> $@
+	@echo '```' >> $@
+	@echo -e '\n=> https://git.sr.ht/~jonhiggs/gemini-healthchecker/ The source to run your own gemini-healthchecker can be found at https://git.sr.ht/~jonhiggs/gemini-healthchecker/.' >> $@
+	@echo -e '\nThis page was last updated at ${DATE}.' >> $@
 
 
 .FORCE:
