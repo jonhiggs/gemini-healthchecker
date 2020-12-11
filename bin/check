@@ -109,7 +109,7 @@ _test() {
     _info $1 "testing using dry mode"
     return $((RANDOM%3))
   else
-    [[ $(${ROOT_DIR}/bin/gmni -j once -I "$target" 2> /dev/null | awk '{ print $1 }') -eq 20 ]]
+    [[ $(${ROOT_DIR}/bin/gmni -N -j once -I "$target" 2> /dev/null | awk '{ print $1 }') -eq 20 ]]
     return $?
   fi
 }
