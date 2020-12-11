@@ -102,14 +102,16 @@ _succeed() {
 
 _test() {
   local target
+  local timeout
   target="$(_fetch_config "$1" | jq -r .target)"
+  timeout="$(_fetch_config "$1" | jq -r .timeout)"
   _info $1 "testing ${target}"
   redis-cli SET "LT-$1" "$(date +%s)" >/dev/null  # last test
   if ${DRY_MODE}; then
     _info $1 "testing using dry mode"
     return $((RANDOM%3))
   else
-    [[ $(${ROOT_DIR}/bin/gmni -N -j once -I "$target" 2> /dev/null | awk '{ print $1 }') -eq 20 ]]
+    [[ $(timeout "${timeout}" ${ROOT_DIR}/bin/gmni -N -j once -I "$target" 2> /dev/null | awk '{ print $1 }') -eq 20 ]]
     return $?
   fi
 }

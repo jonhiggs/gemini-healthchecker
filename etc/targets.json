@@ -5,7 +5,8 @@
     "email": "jon@shit.cx",
     "check_frequency": 60,
     "retries": 3,
-    "retry_rate": 5
+    "retry_rate": 5,
+    "timeout": 5
   },
   {
     "id": "e5f32439-cbb8-4d13-b70e-8d2ee7cbc0fe",
@@ -13,6 +14,7 @@
     "email": "jon@shit.cx",
     "check_frequency": 60,
     "retries": 3,
-    "retry_rate": 5
+    "retry_rate": 5,
+    "timeout": 1
   }
 ]
