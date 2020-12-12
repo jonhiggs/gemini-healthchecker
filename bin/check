@@ -21,6 +21,15 @@ _fetch_config() {
   jq --arg id "$1" '.[] | select(.id == $id)' "${TARGETS}"
 }
 
+_fetch_value() {
+  local p
+  local v
+  v="DEFAULT_${2^^}"
+  p=$(_fetch_config "$1" | jq -r ".$2")
+  [[ $p == "null" ]] && p=${!v}
+  echo $p
+}
+
 _lock() {
   _debug $1 "locking for $2 seconds"
   redis-cli SET "L-$1" "lock" EX "$2" >/dev/null || true
@@ -39,9 +48,9 @@ _fail() {
   local retries
   local check_frequency
   count=$(redis-cli --raw GET "F-$1")
-  retries=$(_fetch_config "$1" | jq .retries)
-  retry_rate=$(_fetch_config "$1" | jq .retry_rate)
-  check_frequency=$(_fetch_config "$1" | jq .check_frequency)
+  retries=$(_fetch_value "$1" "retries")
+  retry_rate=$(_fetch_value "$1" "retry_rate")
+  check_frequency=$(_fetch_value "$1" "check_frequency")
 
   _info $1 "recording failure #${count}"
 
@@ -58,7 +67,7 @@ _fail() {
 
 _raise_failure_alarm() {
   local target
-  target="$(_fetch_config "$1" | jq -r .target)"
+  target="$(_fetch_value "$1" "target")"
   _send_email "$1" \
     "Failure of ${target} was detected" \
     "${target} has entered an alarm state"
@@ -66,7 +75,7 @@ _raise_failure_alarm() {
 
 _raise_recovery_alarm() {
   local target
-  target="$(_fetch_config "$1" | jq -r .target)"
+  target="$(_fetch_value "$1" "target")"
   _send_email "$1" \
     "Recovery of ${target} was detected" \
     "${target} has recovered since failing at $(_last_success $1)."
@@ -78,7 +87,7 @@ _last_success() {
 
 _send_email() {
   local email
-  email="$(_fetch_config "$1" | jq -r .email)"
+  email="$(_fetch_value "$1" "email")"
   _info $1 "notifying ${email} that $3"
   echo -e "Subject: $2\n\n$3" | ${MAIL_CMD} -- ${email}
 }
@@ -94,14 +103,14 @@ _succeed() {
 
   redis-cli SET "F-$1" 0 >/dev/null
   redis-cli SET "LS-$1" "$(date +%s)" >/dev/null  # last success
-  _lock "$1" "$(_fetch_config "$1" | jq .check_frequency)"
+  _lock "$1" "$(_fetch_value "$1" "check_frequency")"
 }
 
 _test() {
   local target
   local timeout
-  target="$(_fetch_config "$1" | jq -r .target)"
-  timeout="$(_fetch_config "$1" | jq -r .timeout)"
+  target="$(_fetch_value "$1" "target")"
+  timeout="$(_fetch_value "$1" "timeout")"
   _info $1 "testing ${target}"
   redis-cli SET "LT-$1" "$(date +%s)" >/dev/null  # last test
   if ${DRY_MODE}; then
