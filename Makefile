@@ -17,7 +17,7 @@ content:
 content/index.gmi: DATE = $(shell date -u --iso-8601=seconds | sed 's/\+.*//g')
 content/index.gmi: .FORCE | content
 	@echo -e "# healthcheck.shit.cx\n" > $@
-	@echo -e "This page shows the health of all targets checked. If you would like to receive an email when a failure of Gemini Capsule is detected, please send an email to jon@shit.cx.\n" >> $@
+	@echo -e "This page shows the health of all targets checked. If you would like Gemini Capsule to bre monitored too, please send an email to jon@shit.cx.\n" >> $@
 	@echo '```' >> $@
 	@./bin/dump_status >> $@
 	@echo '```' >> $@
