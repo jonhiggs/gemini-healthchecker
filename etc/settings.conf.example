@@ -1,0 +1,9 @@
+MAIL_CMD="msmtp --from=gemini-healthchecker@shit.cx"    # command to send email
+LOG_LEVEL="info"                                        # supports debug or info
+DRY_MODE="false"                                        # simulate a check rather than performing one
+DEFAULT_RETRIES="3"                                     # default number of retries before sending a notification
+DEFAULT_RETRY_RATE="5"                                  # seconds between retries after a failure has been detected
+DEFAULT_TIMEOUT="5"                                     # seconds before timing out a request
+DEFAULT_CHECK_FREQUENCY="10"                            # seconds between successful requests
+
+# vim: ft=sh

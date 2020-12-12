@@ -2,12 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(dirname "$0")/.."
+source ${ROOT_DIR}/etc/settings.conf
+
 TARGETS=${ROOT_DIR}/etc/targets.json
-
-MAIL_CMD="msmtp --from=gemini-healthchecker@shit.cx"
-LOG_LEVEL=info
-DRY_MODE=false
-
 ENDPOINT_IDS=( $(jq -r .[].id "${TARGETS}") )
 
 _debug() {
