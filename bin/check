@@ -89,7 +89,7 @@ _send_email() {
   local email
   email="$(_fetch_value "$1" "email")"
   _info $1 "notifying ${email} that $3"
-  ${DRY_MODE} || echo -e "Subject: $2\n\n$3" | ${MAIL_CMD} -- ${email}
+  ( ${DRY_MODE} || ${NO_EMAIL} ) || echo -e "Subject: $2\n\n$3" | ${MAIL_CMD} -- ${email}
 }
 
 _succeed() {
