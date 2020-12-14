@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT_DIR="$(dirname "$0")/.."
+
+TARGET=$1
+TIMEOUT=$((RANDOM%2)).1
+RECHECKS=5
+RUNDIR=${ROOT_DIR}/run/$(basename "${TARGET}")
+
+_is_up()        { [[ $(tail -n1 ${RUNDIR}/state) -eq 20 ]]; }
+_is_down()      { ! _is_up; }
+_was_up()       { [[ $(tail -n1 ${RUNDIR}/last_state) -eq 20 ]]; }
+_was_down()     { ! _was_up; }
+_write_state()  { echo $1 >> ${RUNDIR}/state; }
+
+_test_target() {
+  # sets the state to the status code, or 0 for a timeout
+  (
+    set +e
+    c=$(timeout ${TIMEOUT} gmni -j once -I ${TARGET} 2>/dev/null | cut -d\  -f1)
+    [[ $? -eq 124 ]] && c=0
+    _write_state $c
+  )
+}
+
+mkdir -p ${RUNDIR}
+[[ -f ${RUNDIR}/state ]] && mv ${RUNDIR}/state ${RUNDIR}/last_state
+
+for i in $(seq 1 ${RECHECKS}); do
+  _test_target
+  _is_up && break
+done
+
+_is_up && touch ${RUNDIR}/last_success
+
+if _is_up && _was_down; then
+  echo recovered
+elif _is_down && _was_up; then
+  echo failed
+fi
