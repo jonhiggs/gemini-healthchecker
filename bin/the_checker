@@ -3,8 +3,9 @@ TARGET=$1
 TIMEOUT=${2:-2}
 RECHECKS=${3:-5}
 TIME_BETWEEN_RECHECKS=5
-HOST="$(basename "${TARGET}")"
-RUNDIR="${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOST}"
+HOST="$(basename "${TARGET}" | sed 's/:[0-9]*$//')"
+PORT="$(basename "${TARGET}" | awk -F: '(NF==2){print $2} (NF==1){print 1965}')"
+RUNDIR="${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOST}:${PORT}"
 
 set -euo pipefail
 
@@ -22,7 +23,7 @@ _error()        { echo $* >&2 && exit 1; }
 _gemini_status_code() {
   _check_dep "openssl"
   echo -e "${TARGET}/\\r\\n" \
-    | timeout "${TIMEOUT}" openssl s_client -connect "${HOST}:1965" -ign_eof -quiet 2>/dev/null \
+    | timeout "${TIMEOUT}" openssl s_client -connect "${HOST}:${PORT}" -ign_eof -quiet 2>/dev/null \
     | awk '(NR==1) {print $1; exit 0}' \
     || echo 0
 }
