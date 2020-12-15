@@ -19,38 +19,12 @@ A Gemtext page can be generated to show the status of all configured targets.
 
 ## Requirements
 
-It's implemented as a shell script with a few dependencies.
-
-- Redis server
-- redis-cli
-- jq
-- gmni
+- openssl
 
 
 ## Setup
 
 TODO
 
-1. Add a user.
-1. Checkout this repo.
-1. Setup `etc/targets.json`.
-1. Install the dependencies.
-1. Setup a systemd service.
-
-```
-[Unit]
-Description=Gemini Healthchecker
-
-[Service]
-Type=simple
-ExecStart=/home/healthchecker/src/gemini-healthchecker/bin/check
-Restart=on-failure
-StandardOutput=file:/var/log/healthchecker/output
-
-[Install]
-WantedBy=default.target
-```
-
-1. Generate the status page in a cronjob (`make content/index.gmi`)
-1. Serve `content/index.gmi`
+Run the script in your crontab.
 

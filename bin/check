@@ -1,136 +1,52 @@
 #!/usr/bin/env bash
+TARGET=$1
+TIMEOUT=${2:-2}
+RECHECKS=${3:-5}
+RECHECK_INTERVAL=${4:-5}
+HOST="$(basename "${TARGET}" | sed 's/:[0-9]*$//')"
+PORT="$(basename "${TARGET}" | awk -F: '(NF==2){print $2} (NF==1){print 1965}')"
+RUNDIR="${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOST}:${PORT}"
+
 set -euo pipefail
 
-ROOT_DIR="$(dirname "$0")/.."
-source ${ROOT_DIR}/etc/settings.conf
+_usage()        { echo "Usage: $(basename "$0") TARGET [TIMEOUT] [RECHECKS] [RECHECK_INTERVAL]"; }
+_is_up()        { [[ $(tail -n1 "${RUNDIR}/state") -eq 20 ]]; }
+_is_down()      { ! _is_up; }
+_was_up()       { [[ $(tail -n1 "${RUNDIR}/last_state") -eq 20 ]]; }
+_was_down()     { ! _was_up; }
+_last_success() { stat -c %Y "${RUNDIR}/last_success"; }
+_print_date()   { date -u --iso-8601=seconds --date="${1:-now}"; }
+_test_target()  { _gemini_status_code >> "${RUNDIR}/state"; }
+_check_dep()    { command -v "$1" 2>/dev/null || _error "$1: command not found"; }
+_error()        { echo "$@" >&2 && exit 1; }
 
-TARGETS=${ROOT_DIR}/etc/targets.json
-ENDPOINT_IDS=( $(jq -r .[].id "${TARGETS}") )
-
-_debug() {
-  [[ ${LOG_LEVEL} == "debug" ]] && echo "$1: $2" || true
+_gemini_status_code() {
+  _check_dep "openssl"
+  echo -e "${TARGET}/\\r\\n" \
+    | timeout "${TIMEOUT}" openssl s_client -connect "${HOST}:${PORT}" -ign_eof -quiet 2>/dev/null \
+    | awk '(NR==1) {print $1; exit 0}' \
+    || echo 0
 }
 
-_info() {
-  if [[ ${LOG_LEVEL} == "debug" ]] || [[ ${LOG_LEVEL} == "info" ]]; then
-    echo "$1: $2"
-  fi
-}
+[[ $# -eq 0 ]] || [[ $# -gt 4 ]] && _usage && exit 1
+[[ "$*" =~ --help ]]             && _usage && exit 0
 
-_fetch_config() {
-  jq --arg id "$1" '.[] | select(.id == $id)' "${TARGETS}"
-}
+mkdir -p "${RUNDIR}"
+if [[ -f "${RUNDIR}/state" ]]; then
+  mv "${RUNDIR}/state" "${RUNDIR}/last_state"
+else
+  echo 20 > "${RUNDIR}/last_state"  # assume it's ok
+fi
+touch "${RUNDIR}/state"
 
-_fetch_value() {
-  local p
-  local v
-  v="DEFAULT_${2^^}"
-  p=$(_fetch_config "$1" | jq -r ".$2")
-  [[ $p == "null" ]] && p=${!v}
-  echo $p
-}
-
-_lock() {
-  _debug $1 "locking for $2 seconds"
-  redis-cli SET "L-$1" "lock" EX "$2" >/dev/null || true
-}
-
-_locked() {
-  _debug $1 "checking for lock"
-  [[ -n "$(redis-cli --raw GET "L-$1")" ]]
-  return $?
-}
-
-_fail() {
-  redis-cli INCR "F-$1" >/dev/null
-
-  local count
-  local retries
-  local check_frequency
-  count=$(redis-cli --raw GET "F-$1")
-  retries=$(_fetch_value "$1" "retries")
-  retry_rate=$(_fetch_value "$1" "retry_rate")
-  check_frequency=$(_fetch_value "$1" "check_frequency")
-
-  _info $1 "recording failure #${count}"
-
-  if [[ "${count}" -lt "${retries}" ]]; then
-    _info $1 "checking for quick recovery"
-    _lock "$1" "${retry_rate}"
-  elif [[ "${count}" -eq "${retries}" ]]; then
-    _raise_failure_alarm "$1"
-    _lock "$1" "${check_frequency}"
-  else
-    _lock "$1" "${check_frequency}"
-  fi
-}
-
-_raise_failure_alarm() {
-  local target
-  target="$(_fetch_value "$1" "target")"
-  _send_email "$1" \
-    "Failure of ${target} was detected" \
-    "${target} has entered an alarm state"
-}
-
-_raise_recovery_alarm() {
-  local target
-  target="$(_fetch_value "$1" "target")"
-  _send_email "$1" \
-    "Recovery of ${target} was detected" \
-    "${target} has recovered since failing at $(_last_success $1)."
-}
-
-_last_success() {
-  date -u --date="@$(redis-cli --raw GET "LS-$1")" --iso-8601=seconds
-}
-
-_send_email() {
-  local email
-  email="$(_fetch_value "$1" "email")"
-  _info $1 "notifying ${email} that $3"
-  ( ${DRY_MODE} || ${NO_EMAIL} ) || echo -e "Subject: $2\n\n$3" | ${MAIL_CMD} -- ${email}
-}
-
-_succeed() {
-  local count
-  count=$(redis-cli --raw GET "F-$1")
-  if [[ ${count} -gt 0 ]] && [[ ${count} -lt 5 ]]; then
-    _info $1 "a quick recovery was achieved"
-  elif [[ ${count} -ge 5 ]]; then
-    _raise_recovery_alarm "$1"
-  fi
-
-  redis-cli SET "F-$1" 0 >/dev/null
-  redis-cli SET "LS-$1" "$(date +%s)" >/dev/null  # last success
-  _lock "$1" "$(_fetch_value "$1" "check_frequency")"
-}
-
-_test() {
-  local target
-  local timeout
-  target="$(_fetch_value "$1" "target")"
-  timeout="$(_fetch_value "$1" "timeout")"
-  _info $1 "testing ${target}"
-  redis-cli SET "LT-$1" "$(date +%s)" >/dev/null  # last test
-  if ${DRY_MODE}; then
-    _info $1 "testing using dry mode"
-    return $((RANDOM%3))
-  else
-    [[ $(timeout "${timeout}" ${ROOT_DIR}/bin/gmni -N -j once -I "$target" 2> /dev/null | awk '{ print $1 }') -eq 20 ]]
-    return $?
-  fi
-}
-
-while true; do
-  for id in "${ENDPOINT_IDS[@]}"; do
-    _locked "$id" && continue
-
-    if _test "$id"; then
-      _succeed "$id"
-    else
-      _fail "$id"
-    fi
-  done
-  sleep 1
+for ((i=0;i<RECHECKS;i++)); do
+  _test_target
+  _is_up && touch "${RUNDIR}/last_success" && break
+  sleep "${RECHECK_INTERVAL}"
 done
+
+if _is_up && _was_down; then
+  echo "${TARGET} has recovered since failing at $(_print_date "@$(_last_success)")"
+elif _is_down && _was_up; then
+  echo "${TARGET} has entered an alarm state at $(_print_date)"
+fi
