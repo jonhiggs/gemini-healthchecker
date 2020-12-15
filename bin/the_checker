@@ -34,7 +34,7 @@ else
 fi
 touch "${RUNDIR}/state"
 
-for ((i=1;i<RECHECKS;i++)); do
+for ((i=0;i<RECHECKS;i++)); do
   _test_target
   _is_up && break
 done
