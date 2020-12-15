@@ -2,14 +2,14 @@
 TARGET=$1
 TIMEOUT=${2:-2}
 RECHECKS=${3:-5}
-TIME_BETWEEN_RECHECKS=5
+RECHECK_INTERVAL=${4:-5}
 HOST="$(basename "${TARGET}" | sed 's/:[0-9]*$//')"
 PORT="$(basename "${TARGET}" | awk -F: '(NF==2){print $2} (NF==1){print 1965}')"
 RUNDIR="${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOST}:${PORT}"
 
 set -euo pipefail
 
-_usage()        { echo "Usage: $(basename "$0") TARGET [TIMEOUT] [RECHECKS]"; }
+_usage()        { echo "Usage: $(basename "$0") TARGET [TIMEOUT] [RECHECKS] [RECHECK_INTERVAL]"; }
 _is_up()        { [[ $(tail -n1 "${RUNDIR}/state") -eq 20 ]]; }
 _is_down()      { ! _is_up; }
 _was_up()       { [[ $(tail -n1 "${RUNDIR}/last_state") -eq 20 ]]; }
@@ -28,7 +28,7 @@ _gemini_status_code() {
     || echo 0
 }
 
-[[ $# -eq 0 ]] || [[ $# -gt 3 ]] && _usage && exit 1
+[[ $# -eq 0 ]] || [[ $# -gt 4 ]] && _usage && exit 1
 [[ "$*" =~ --help ]]             && _usage && exit 0
 
 mkdir -p "${RUNDIR}"
@@ -42,7 +42,7 @@ touch "${RUNDIR}/state"
 for ((i=0;i<RECHECKS;i++)); do
   _test_target
   _is_up && touch "${RUNDIR}/last_success" && break
-  sleep "${TIME_BETWEEN_RECHECKS}"
+  sleep "${RECHECK_INTERVAL}"
 done
 
 if _is_up && _was_down; then
