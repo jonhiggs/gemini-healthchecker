@@ -17,8 +17,8 @@ _was_down()     { ! _was_up; }
 _last_success() { stat -c %Y "${RUNDIR}/last_success"; }
 _print_date()   { date -u --iso-8601=seconds --date="${1:-now}"; }
 _test_target()  { _gemini_status_code >> "${RUNDIR}/state"; }
-_check_dep()    { command -v $1 2>/dev/null || _error "$1: command not found"; }
-_error()        { echo $* >&2 && exit 1; }
+_check_dep()    { command -v "$1" 2>/dev/null || _error "$1: command not found"; }
+_error()        { echo "$@" >&2 && exit 1; }
 
 _gemini_status_code() {
   _check_dep "openssl"
