@@ -40,11 +40,9 @@ touch "${RUNDIR}/state"
 
 for ((i=0;i<RECHECKS;i++)); do
   _test_target
-  _is_up && break
+  _is_up && touch "${RUNDIR}/last_success" && break
   sleep "${TIME_BETWEEN_RECHECKS}"
 done
-
-_is_up && touch "${RUNDIR}/last_success"
 
 if _is_up && _was_down; then
   echo "${TARGET} has recovered since failing at $(_print_date "@$(_last_success)")"
