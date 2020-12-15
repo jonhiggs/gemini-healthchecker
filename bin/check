@@ -3,8 +3,8 @@ TARGET=$1
 TIMEOUT=${2:-2}
 RECHECKS=${3:-5}
 RECHECK_INTERVAL=${4:-5}
-HOST="$(basename "${TARGET}" | sed 's/:[0-9]*$//')"
-PORT="$(basename "${TARGET}" | awk -F: '(NF==2){print $2} (NF==1){print 1965}')"
+HOST="$(echo "${TARGET}" | cut -d/ -f3 | sed 's/:[0-9]*$//')"
+PORT="$(echo "${TARGET}" | cut -d/ -f3 | awk -F: '(NF==2){print $2} (NF==1){print 1965}')"
 RUNDIR="${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOST}:${PORT}"
 
 set -euo pipefail
