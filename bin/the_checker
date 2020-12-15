@@ -25,7 +25,11 @@ _test_target() {
 }
 
 mkdir -p "${RUNDIR}"
-[[ -f "${RUNDIR}/state" ]] && mv "${RUNDIR}/state" "${RUNDIR}/last_state"
+if [[ -f "${RUNDIR}/state" ]]; then
+  mv "${RUNDIR}/state" "${RUNDIR}/last_state"
+else
+  echo 20 > "${RUNDIR}/last_state"  # assume it's ok
+fi
 
 for ((i=1;i<RECHECKS;i++)); do
   _test_target
