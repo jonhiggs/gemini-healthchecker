@@ -4,7 +4,8 @@ set -euo pipefail
 TARGET=$1
 TIMEOUT=2
 RECHECKS=5
-RUNDIR="${XDG_RUNTIME_DIR}/gemini-healthchecker/$(basename "${TARGET}")"
+HOST="$(basename "${TARGET}")"
+RUNDIR="${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOSTNAME}"
 
 _is_up()        { [[ $(tail -n1 "${RUNDIR}/state") -eq 20 ]]; }
 _is_down()      { ! _is_up; }
@@ -15,13 +16,9 @@ _last_success() { stat -c %Y "${RUNDIR}/last_success"; }
 _print_date()   { date -u --iso-8601=seconds --date="@$1"; }
 
 _test_target() {
-  # sets the state to the status code, or 0 for a timeout
-  (
-    set +e
-    c=$(timeout ${TIMEOUT} gmni -j once -I "${TARGET}" 2>/dev/null | cut -d\  -f1)
-    [[ $? -eq 124 ]] && c=0
-    _write_state $c
-  )
+  echo -e "${TARGET}/\r\n" \
+    | timeout ${TIMEOUT} openssl s_client -connect ${HOST}:1965 -ign_eof -quiet 2>/dev/null \
+    | awk '(NR==1) { print $1 }'
 }
 
 mkdir -p "${RUNDIR}"
