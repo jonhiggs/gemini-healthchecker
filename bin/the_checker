@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 TARGET=$1
 TIMEOUT=${2:-2}
-RECHECKS=${3:-3}
+RECHECKS=${3:-5}
+TIME_BETWEEN_RECHECKS=5
 HOST="$(basename "${TARGET}")"
 RUNDIR="${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOST}"
 
@@ -40,6 +41,7 @@ touch "${RUNDIR}/state"
 for ((i=0;i<RECHECKS;i++)); do
   _test_target
   _is_up && break
+  sleep "${TIME_BETWEEN_RECHECKS}"
 done
 
 _is_up && touch "${RUNDIR}/last_success"
