@@ -23,9 +23,8 @@ _gemini_status_code() {
     || echo 0
 }
 
-[[ $# -eq 0 ]] && _usage && exit 1
-[[ $# -gt 3 ]] && _usage && exit 1
-[[ "$*" =~ --help ]] && _usage && exit 0
+[[ $# -eq 0 ]] || [[ $# -gt 3 ]] && _usage && exit 1
+[[ "$*" =~ --help ]]             && _usage && exit 0
 
 mkdir -p "${RUNDIR}"
 if [[ -f "${RUNDIR}/state" ]]; then
