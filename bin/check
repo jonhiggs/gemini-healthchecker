@@ -52,6 +52,6 @@ if _is_up && _was_down; then
     "${TARGET} has recovered since failing at $(_print_date "@$(_last_success)")"
 elif _is_down && _was_up; then
   _print_email \
-    "${TARGET} has has failed" \
+    "${TARGET} has failed" \
     "${TARGET} has entered an alarm state at $(_print_date)"
 fi
