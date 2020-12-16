@@ -19,6 +19,7 @@ _print_date()   { date -u --iso-8601=seconds --date="${1:-now}"; }
 _test_target()  { _gemini_status_code >> "${RUNDIR}/state"; }
 _check_dep()    { command -v "$1" 2>/dev/null || _error "$1: command not found"; }
 _error()        { echo "$@" >&2 && exit 1; }
+_print_email()  { echo -e "Subject: $1\n\n$2"; }
 
 _gemini_status_code() {
   _check_dep "openssl"
@@ -46,7 +47,11 @@ for ((i=0;i<RECHECKS;i++)); do
 done
 
 if _is_up && _was_down; then
-  echo "${TARGET} has recovered since failing at $(_print_date "@$(_last_success)")"
+  _print_email \
+    "${TARGET} has recovered" \
+    "${TARGET} has recovered since failing at $(_print_date "@$(_last_success)")"
 elif _is_down && _was_up; then
-  echo "${TARGET} has entered an alarm state at $(_print_date)"
+  _print_email \
+    "${TARGET} has has failed" \
+    "${TARGET} has entered an alarm state at $(_print_date)"
 fi
