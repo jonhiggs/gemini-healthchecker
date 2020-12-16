@@ -31,6 +31,7 @@ _gemini_status_code() {
 
 [[ $# -eq 0 ]] || [[ $# -gt 4 ]] && _usage && exit 1
 [[ "$*" =~ --help ]]             && _usage && exit 0
+[[ -z "${XDG_RUNTIME_DIR}" ]]    && _error "XDG_RUNTIME_DIR is undefined"
 
 mkdir -p "${RUNDIR}"
 if [[ -f "${RUNDIR}/state" ]]; then
