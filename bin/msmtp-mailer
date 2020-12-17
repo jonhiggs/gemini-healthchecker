@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+[[ $# -ne 2 ]] && exit 1
+
+f=$(mktemp)
+cat - > $f
+cat $f | grep -q -v ^$ || exit 0
+( echo -e "Subject: $1\n"; cat $f ) | msmtp -- $2
+rm -f $f
