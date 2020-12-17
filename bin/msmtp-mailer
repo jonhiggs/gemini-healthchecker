@@ -11,5 +11,7 @@ target=$(awk '{ print $1 }' $f)
 grep -q "has recovered" $f && subject="${target} has recovered"
 grep -q "has entered"   $f && subject="${target} has failed"
 
-( echo -e "To: ${MAILTO}\nSubject: ${subject}\n"; cat $f ) | msmtp -- ${MAILTO}
+( echo -e "To: ${MAILTO}\nSubject: ${subject}\n"; cat $f ) \
+  | msmtp -- ${MAILTO}
+
 rm -f $f
