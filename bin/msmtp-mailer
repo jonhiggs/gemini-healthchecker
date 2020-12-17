@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
-[[ $# -ne 2 ]] && exit 1
+_error() { echo "$@" >&2; exit 1; }
+
+[[ -z "${MAILTO}" ]] && _error "environment does not contain MAILTO"
 
 f=$(mktemp)
 cat - > $f
 cat $f | grep -q -v ^$ || exit 0
-( echo -e "Subject: $1\n"; cat $f ) | msmtp -- $2
+
+target=$(awk '{ print $1 }' $f)
+grep -q "has recovered" $f && subject="${target} has recovered"
+grep -q "has entered"   $f && subject="${target} has failed"
+
+( echo -e "Subject: ${subject}\n"; cat $f ) | msmtp -- ${MAILTO}
 rm -f $f
