@@ -10,12 +10,14 @@ _age() { echo $(( $(date +%s) - $1 ))s ago; }
 echo -e "# status.shit.cx\\n"
 echo -e "This page shows the health of all targets checked. If you would like your Gemini Capsule to be monitored too, send a request to jon@shit.cx.\\n"
 
+echo '```'
 (
   echo -e "target\\tstatus\\tlast test\\tlast_success"
   for f in "${RUNDIR}"/*; do
     echo -e "$(_target "$f")\\t$(_state "$f")\\t$(_last_test "$f")\\t$(_last_success "$f")"
   done
 ) | column -t -s$'\t'
+echo '```'
 
 echo
 echo -e "=> https://git.sr.ht/~jonhiggs/gemini-healthchecker The source to run your own gemini-healthchecker can be found at https://git.sr.ht/~jonhiggs/gemini-healthchecker/.\\n"
