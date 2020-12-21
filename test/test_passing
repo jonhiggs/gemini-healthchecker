@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+ROOT_DIR="$(dirname "$0")/../"
+source <(cat "${ROOT_DIR}/bin/check" | awk -f ${ROOT_DIR}/test/load_functions.awk)
+
+oneTimeSetUp() {
+  RUNDIR=$(mktemp -d)
+  echo 20 > ${RUNDIR}/state
+  echo 20 > ${RUNDIR}/last_state
+  touch ${RUNDIR}/last_success
+}
+
+oneTimeTearDown() {
+  rm -Rf "${RUNDIR}"
+}
+
+testStateFile() {
+  f="${RUNDIR}/state"
+  assertTrue   "has statefile"                "[[ -f $f ]]"
+  assertEquals "content of statefile"   "20"  "$(cat $f)"
+}
+
+testLastStateFile() {
+  f="${RUNDIR}/last_state"
+  assertTrue   "has statefile"                "[[ -f $f ]]"
+  assertEquals "content of statefile"   "20"  "$(cat $f)"
+}
+
+testState() {
+  assertTrue  "_is_up"
+  assertFalse "_is_down"
+  assertTrue  "_was_up"
+  assertFalse "_was_down"
+}
+
+testLastSuccess() {
+  assertTrue  "is a number"           "[[ $(_last_success) =~ ^[0-9]+$ ]]"
+  assertTrue  "is <= current epoch"   "[[ $(_last_success) -le $(date +%s) ]]"
+}
+
+testDates() {
+  assertEquals "@0"  "1970-01-01T00:00:00+00:00" "$(_print_date "@0")"
+}
+
+source $(dirname $0)/shunit2

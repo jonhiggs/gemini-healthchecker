@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+ROOT_DIR="$(dirname "$0")/../"
+source <(cat "${ROOT_DIR}/bin/check" | awk -f ${ROOT_DIR}/test/load_functions.awk)
+
+oneTimeSetUp() {
+  RUNDIR=$(mktemp -d)
+  echo 50 > ${RUNDIR}/state
+  echo 50 > ${RUNDIR}/last_state
+}
+
+oneTimeTearDown() {
+  rm -Rf "${RUNDIR}"
+}
+
+testLastStateFile() {
+  f="${RUNDIR}/last_state"
+  assertTrue   "has statefile"                "[[ -f $f ]]"
+  assertEquals "content of statefile"   "50"  "$(cat $f)"
+}
+
+testState() {
+  assertFalse "_is_up"
+  assertTrue  "_is_down"
+  assertFalse "_was_up"
+  assertTrue  "_was_down"
+}
+
+source $(dirname $0)/shunit2
