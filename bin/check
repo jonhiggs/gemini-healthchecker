@@ -5,7 +5,7 @@ RECHECKS=${3:-5}
 RECHECK_INTERVAL=${4:-5}
 HOST="$(echo "${TARGET}" | cut -d/ -f3 | sed 's/:[0-9]*$//')"
 PORT="$(echo "${TARGET}" | cut -d/ -f3 | awk -F: '(NF==2){print $2} (NF==1){print 1965}')"
-REMOTE_PATH="$(echo ${TARGET} | sed "s#^gemini://${HOST}##")"
+REMOTE_PATH="/$(echo ${TARGET} | cut -d/ -f4-)"
 RUNDIR="${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOST}:${PORT}"
 
 set -euo pipefail
@@ -33,7 +33,6 @@ _gemini_status_code() {
 [[ "$*" =~ --help ]]             && _usage && exit 0
 [[ -z "${XDG_RUNTIME_DIR}" ]]    && _error "XDG_RUNTIME_DIR is undefined"
 [[ ${TARGET} =~ ^gemini:// ]]    || _error "TARGET must have a gemini protocol"
-[[ -z ${REMOTE_PATH} ]]          && REMOTE_PATH="/"
 
 mkdir -p "${RUNDIR}"
 if [[ -f "${RUNDIR}/state" ]]; then
