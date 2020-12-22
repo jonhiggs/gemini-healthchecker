@@ -11,7 +11,11 @@ target=$(awk '{ print $1 }' $f)
 grep -q "has recovered" $f && subject="${target} has recovered"
 grep -q "has entered"   $f && subject="${target} has failed"
 
-( echo -e "To: ${MAILTO}\nSubject: ${subject}\n"; cat $f ) \
-  | msmtp -- ${MAILTO}
+headers=()
+headers+=("To: ${MAILTO}")
+headers+=("Subject: ${subject}")
+[[ -n "${MAILBCC}" ]] && headers+=("Bcc: ${MAILBCC}")
+
+for i in "${headers[@]}"; do echo "$i"; done | msmtp -- "${MAILTO}"
 
 rm -f $f
