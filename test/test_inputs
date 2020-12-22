@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+ROOT_DIR="$(dirname "$0")/../"
+
+
+oneTimeSetUp() {
+  RUNDIR=$(mktemp -d)
+  echo 20 > ${RUNDIR}/state
+  echo 20 > ${RUNDIR}/last_state
+  touch ${RUNDIR}/last_success
+}
+
+testBasicTarget() {
+  TARGET="gemini://test.target.com/"
+  source <(cat "${ROOT_DIR}/bin/check" | awk -v target=${TARGET} -f ${ROOT_DIR}/test/load_constants.awk)
+
+  assertEquals "TARGET"       "gemini://test.target.com/"  "$(echo ${TARGET})"
+  assertEquals "HOST"         "test.target.com"           "$(echo ${HOST})"
+  assertEquals "PORT"         "1965"                      "$(echo ${PORT})"
+  assertEquals "REMOTE_PATH"  "/"                         "$(echo ${REMOTE_PATH})"
+}
+
+testTargetWithPath() {
+  TARGET="gemini://test.target.com/with/a/path/"
+  source <(cat "${ROOT_DIR}/bin/check" | awk -v target=${TARGET} -f ${ROOT_DIR}/test/load_constants.awk)
+
+  assertEquals "TARGET"       "gemini://test.target.com/with/a/path/" "$(echo ${TARGET})"
+  assertEquals "HOST"         "test.target.com"                       "$(echo ${HOST})"
+  assertEquals "PORT"         "1965"                                  "$(echo ${PORT})"
+  assertEquals "REMOTE_PATH"  "/with/a/path/"                         "$(echo ${REMOTE_PATH})"
+}
+
+testTargetWithPort() {
+  TARGET="gemini://test.target.com:1966/"
+  source <(cat "${ROOT_DIR}/bin/check" | awk -v target=${TARGET} -f ${ROOT_DIR}/test/load_constants.awk)
+
+  assertEquals "TARGET"       "gemini://test.target.com:1966/"  "$(echo ${TARGET})"
+  assertEquals "HOST"         "test.target.com"                 "$(echo ${HOST})"
+  assertEquals "PORT"         "1966"                            "$(echo ${PORT})"
+  assertEquals "REMOTE_PATH"  "/"                               "$(echo ${REMOTE_PATH})"
+}
+
+testTargetWithoutPath() {
+  TARGET="gemini://test.target.com"
+  source <(cat "${ROOT_DIR}/bin/check" | awk -v target=${TARGET} -f ${ROOT_DIR}/test/load_constants.awk)
+
+  assertEquals "TARGET"       "gemini://test.target.com"  "$(echo ${TARGET})"
+  assertEquals "HOST"         "test.target.com"           "$(echo ${HOST})"
+  assertEquals "PORT"         "1965"                      "$(echo ${PORT})"
+  assertEquals "REMOTE_PATH"  "/"                         "$(echo ${REMOTE_PATH})"
+}
+
+source $(dirname $0)/shunit2
