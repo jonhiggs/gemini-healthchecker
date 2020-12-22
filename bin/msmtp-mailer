@@ -15,6 +15,7 @@ headers=()
 headers+=("To: ${MAILTO}")
 headers+=("Subject: ${subject}")
 [[ -n "${MAILBCC}" ]] && headers+=("Bcc: ${MAILBCC}")
+[[ -n "${MAILCC}" ]]  && headers+=("Cc: ${MAILCC}")
 
 (
   for i in "${headers[@]}"; do echo "$i"; done
