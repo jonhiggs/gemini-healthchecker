@@ -13,9 +13,9 @@ grep -q "has entered"   $f && subject="${target} has failed"
 
 headers=()
 headers+=("To: ${MAILTO}")
-headers+=("Subject: ${subject}")
-[[ -n "${MAILBCC}" ]] && headers+=("Bcc: ${MAILBCC}")
 [[ -n "${MAILCC}" ]]  && headers+=("Cc: ${MAILCC}")
+[[ -n "${MAILBCC}" ]] && headers+=("Bcc: ${MAILBCC}")
+headers+=("Subject: ${subject}")
 
 (
   for i in "${headers[@]}"; do echo "$i"; done
