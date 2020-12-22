@@ -19,7 +19,8 @@ headers+=("Subject: ${subject}")
 
 (
   for i in "${headers[@]}"; do echo "$i"; done
-  echo; cat $f
+  echo
+  cat $f
 ) | msmtp -- "${MAILTO}"
 
 rm -f $f
