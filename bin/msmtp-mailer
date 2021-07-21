@@ -4,6 +4,8 @@ _error() { echo "$@" >&2; exit 1; }
 [[ -z "${MAILTO}" ]] && _error "environment does not contain MAILTO"
 
 f=$(mktemp)
+trap "rm -f $f" EXIT
+
 cat - > $f
 cat $f | grep -q -v ^$ || exit 0
 
@@ -22,5 +24,3 @@ headers+=("Subject: ${subject}")
   echo
   cat $f
 ) | msmtp -- "${MAILTO}"
-
-rm -f $f
