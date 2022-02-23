@@ -23,8 +23,8 @@ _error()        { echo "$@" >&2 && exit 1; }
 
 _gemini_status_code() {
   _check_dep "gemget"
-  timeout "${TIMEOUT}" gemget gemini://${HOST}${REMOTE_PATH} --header -o /dev/null 2>&1 \
     | awk '/^Header:/ { print $2; exit 0 }' \
+  gemget gemini://${HOST}${REMOTE_PATH} -t ${TIMEOUT} --header -o /dev/null 2>/dev/null \
     || echo 0
 }
 
