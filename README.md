@@ -16,7 +16,7 @@ When a failure is detected, it quickly checks a few more times to rule out a tra
 
 ## Requirements
 
-- openssl
+- [gemget](https://github.com/makeworld-the-better-one/gemget)
 
 
 ## Setup
