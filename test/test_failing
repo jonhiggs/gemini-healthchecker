@@ -8,10 +8,6 @@ oneTimeSetUp() {
   echo 50 > ${RUNDIR}/last_state
 }
 
-oneTimeTearDown() {
-  rm -Rf "${RUNDIR}"
-}
-
 testLastStateFile() {
   f="${RUNDIR}/last_state"
   assertTrue   "has statefile"                "[[ -f $f ]]"
@@ -23,6 +19,10 @@ testState() {
   assertTrue  "_is_down"
   assertFalse "_was_up"
   assertTrue  "_was_down"
+}
+
+oneTimeTearDown() {
+  rm -Rf "${RUNDIR}"
 }
 
 source $(dirname $0)/shunit2

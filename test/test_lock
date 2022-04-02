@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+ROOT_DIR="$(dirname "$0")/../"
+source <(cat "${ROOT_DIR}/bin/check" | awk -f ${ROOT_DIR}/test/load_functions.awk)
+
+oneTimeSetUp() {
+  export RUNDIR=$(mktemp -d)
+}
+
+testLock() {
+  assertTrue    "unlock while unlocked" "_unlock"
+  assertFalse   "starts unlocked"       "_locked"
+  assertTrue    "lock"                  "_lock"
+  assertTrue    "becomes locked"        "_locked"
+  assertTrue    "unlock while locked"   "_unlock"
+}
+
+testRunWhileLocked() {
+  _lock
+  assertEquals "Lockfile exists" "$(${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
+}
+
+testKillSIGHUP() {
+  assertEquals  "kill" "Hangup"   "$(timeout -s 1 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
+  assertFalse   "still locked"    "_locked"
+}
+
+testKillSIGINT() {
+  assertEquals  "kill" ""         "$(timeout -s 2 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
+  assertFalse   "still locked"    "_locked"
+}
+
+testKillSIGQUIT() {
+  assertEquals  "kill" "Quit"     "$(timeout -s 3 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
+  assertFalse   "still locked"    "_locked"
+}
+
+testKillSIGABRT() {
+  assertEquals  "kill" "Aborted"  "$(timeout -s 6 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
+  assertFalse   "still locked"    "_locked"
+}
+
+# TODO: handle `kill -9`
+#testKillSIGKILL() {
+#  assertEquals  "kill" ""         "$(timeout -s 9 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
+#  assertFalse   "still locked"    "_locked"
+#}
+
+testKillSIGTERM() {
+  assertEquals  "kill" "Terminated" "$(timeout -s 15 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
+  assertFalse   "still locked"      "_locked"
+}
+
+tearDown() {
+  _unlock
+}
+
+oneTimeTearDown() {
+  rm -Rf "${RUNDIR}"
+}
+
+
+source $(dirname $0)/shunit2

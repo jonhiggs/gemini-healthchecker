@@ -6,7 +6,7 @@ RECHECK_INTERVAL=${4:-5}
 HOST="$(echo "${TARGET}" | cut -d/ -f3 | sed 's/:[0-9]*$//')"
 PORT="$(echo "${TARGET}" | cut -d/ -f3 | awk -F: '(NF==2){print $2} (NF==1){print 1965}')"
 REMOTE_PATH="/$(echo ${TARGET} | cut -d/ -f4-)"
-RUNDIR="${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOST}:${PORT}"
+RUNDIR="${RUNDIR:-${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOST}:${PORT}}"
 
 set -euo pipefail
 
@@ -20,6 +20,9 @@ _print_date()   { date -u --iso-8601=seconds --date="${1:-now}"; }
 _test_target()  { _gemini_status_code >> "${RUNDIR}/state"; }
 _check_dep()    { command -v "$1" &>/dev/null || _error "$1: command not found"; }
 _error()        { echo "$@" >&2 && exit 1; }
+_locked()       { [[ -f "${RUNDIR}/lock" ]]; }
+_lock()         { touch "${RUNDIR}/lock"; }
+_unlock()       { rm -f "${RUNDIR}/lock"; }
 
 _gemini_status_code() {
   _check_dep "gemget"
@@ -35,6 +38,14 @@ _gemini_status_code() {
 [[ ${TARGET} =~ ^gemini:// ]]    || _error "TARGET must have a gemini protocol"
 
 mkdir -p "${RUNDIR}"
+if _locked; then
+  _error "Lockfile exists"
+else
+  _lock
+fi
+
+trap '_unlock' 1 2 3 6 9 15
+
 if [[ -f "${RUNDIR}/state" ]]; then
   mv "${RUNDIR}/state" "${RUNDIR}/last_state"
 else

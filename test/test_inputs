@@ -13,7 +13,7 @@ testBasicTarget() {
   TARGET="gemini://test.target.com/"
   source <(cat "${ROOT_DIR}/bin/check" | awk -v target=${TARGET} -f ${ROOT_DIR}/test/load_constants.awk)
 
-  assertEquals "TARGET"       "gemini://test.target.com/"  "$(echo ${TARGET})"
+  assertEquals "TARGET"       "gemini://test.target.com/" "$(echo ${TARGET})"
   assertEquals "HOST"         "test.target.com"           "$(echo ${HOST})"
   assertEquals "PORT"         "1965"                      "$(echo ${PORT})"
   assertEquals "REMOTE_PATH"  "/"                         "$(echo ${REMOTE_PATH})"
