@@ -19,7 +19,7 @@ _last_success() { stat -c %Y "${RUNDIR}/last_success"; }
 _print_date()   { date -u --iso-8601=seconds --date="${1:-now}"; }
 _test_target()  { _gemini_status_code >> "${RUNDIR}/state"; }
 _check_dep()    { command -v "$1" &>/dev/null || _error "$1: command not found"; }
-_error()        { echo "$@" >&2 && exit 1; }
+_error()        { echo -e "$@" >&2 && exit 1; }
 _locked()       { [[ -f "${RUNDIR}/lock" ]]; }
 _lock()         { touch "${RUNDIR}/lock"; }
 _unlock()       { rm -f "${RUNDIR}/lock"; }
@@ -39,7 +39,7 @@ _gemini_status_code() {
 
 mkdir -p "${RUNDIR}"
 if _locked; then
-  _error "Lockfile exists"
+  _error "Lockfile exists for ${TARGET}\n\nTimeout is too long, or checks are too frequent. Adjust to prevent overlapping checks."
 else
   _lock
 fi

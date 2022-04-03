@@ -16,7 +16,11 @@ testLock() {
 
 testRunWhileLocked() {
   _lock
-  assertEquals "Lockfile exists" "$(${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
+  assertContains "$(${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)" \
+    "Lockfile exists for gemini://test.shit.cx"
+
+  assertContains "$(${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)" \
+    "Timeout is too long, or checks are too frequent. Adjust to prevent overlapping checks."
 }
 
 testKillSIGHUP() {
