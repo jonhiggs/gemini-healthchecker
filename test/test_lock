@@ -43,6 +43,10 @@ testKillSIGABRT() {
   assertFalse   "still locked"    "_locked"
 }
 
+# TODO: work out how to test this...
+#testCleanExit() {
+#}
+
 # TODO: handle `kill -9`
 #testKillSIGKILL() {
 #  assertEquals  "kill" ""         "$(timeout -s 9 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
