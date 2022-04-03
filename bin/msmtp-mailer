@@ -10,11 +10,13 @@ cat - > $f
 cat $f | grep -q -v ^$ || exit 0
 
 target=$(awk '{ print $1 }' $f)
-grep -q "has recovered" $f && subject="${target} has recovered"
-grep -q "has entered"   $f && subject="${target} has failed"
+grep -q "has recovered"   $f && subject="${target} has recovered"
+grep -q "has entered"     $f && subject="${target} has failed"
+grep -q "Lockfile exists" $f && subject="${target} is locked"
 
 headers=()
 headers+=("To: ${MAILTO}")
+# FIXME: MAILCC and MAILBCC doesn't work
 [[ -n "${MAILCC}" ]]  && headers+=("Cc: ${MAILCC}")
 [[ -n "${MAILBCC}" ]] && headers+=("Bcc: ${MAILBCC}")
 headers+=("Subject: ${subject}")
