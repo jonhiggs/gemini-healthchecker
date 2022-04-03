@@ -64,3 +64,5 @@ if _is_up && _was_down; then
 elif _is_down && _was_up; then
   echo "${TARGET} has entered an alarm state at $(_print_date)"
 fi
+
+_unlock
