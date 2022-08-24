@@ -6,7 +6,7 @@ RECHECK_INTERVAL=${4:-5}
 HOST="$(echo "${TARGET}" | cut -d/ -f3 | sed 's/:[0-9]*$//')"
 PORT="$(echo "${TARGET}" | cut -d/ -f3 | awk -F: '(NF==2){print $2} (NF==1){print 1965}')"
 REMOTE_PATH="/$(echo ${TARGET} | cut -d/ -f4-)"
-RUNDIR="${RUNDIR:-${XDG_RUNTIME_DIR}/gemini-healthchecker/${HOST}:${PORT}}"
+RUNDIR="${RUNDIR:-${HOME}/.local/share/gemini-healthchecker/${HOST}:${PORT}}"
 
 set -euo pipefail
 
@@ -15,8 +15,8 @@ _is_up()        { [[ $(tail -n1 "${RUNDIR}/state") -eq 20 ]]; }
 _is_down()      { ! _is_up; }
 _was_up()       { [[ $(tail -n1 "${RUNDIR}/last_state") -eq 20 ]]; }
 _was_down()     { ! _was_up; }
-_last_success() { stat -c %Y "${RUNDIR}/last_success"; }
-_print_date()   { date -u --iso-8601=seconds --date="${1:-now}"; }
+_last_success() { eval $(stat -s "${RUNDIR}/last_success"); echo ${st_mtime}; }
+_print_date()   { date -u -r $1 +%Y-%m-%dT%H:%M:%S%z; }
 _test_target()  { _gemini_status_code >> "${RUNDIR}/state"; }
 _check_dep()    { command -v "$1" &>/dev/null || _error "$1: command not found"; }
 _error()        { echo -e "$@" >&2 && exit 1; }
@@ -34,7 +34,6 @@ _gemini_status_code() {
 
 [[ $# -eq 0 ]] || [[ $# -gt 4 ]] && _usage && exit 1
 [[ "$*" =~ --help ]]             && _usage && exit 0
-[[ -z "${XDG_RUNTIME_DIR}" ]]    && _error "XDG_RUNTIME_DIR is undefined"
 [[ ${TARGET} =~ ^gemini:// ]]    || _error "TARGET must have a gemini protocol"
 
 mkdir -p "${RUNDIR}"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-ROOT_DIR="$(dirname "$0")/../"
+ROOT_DIR="$(realpath $(dirname "$0")/../)"
 source <(cat "${ROOT_DIR}/bin/check" | awk -f ${ROOT_DIR}/test/load_functions.awk)
 
 oneTimeSetUp() {
@@ -33,15 +33,15 @@ testKillSIGINT() {
   assertFalse   "still locked"    "_locked"
 }
 
-testKillSIGQUIT() {
-  assertEquals  "kill" "Quit"     "$(timeout -s 3 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
-  assertFalse   "still locked"    "_locked"
-}
-
-testKillSIGABRT() {
-  assertEquals  "kill" "Aborted"  "$(timeout -s 6 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
-  assertFalse   "still locked"    "_locked"
-}
+#testKillSIGQUIT() {
+#  assertEquals  "kill" "Quit"     "$(timeout -s 3 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
+#  assertFalse   "still locked"    "_locked"
+#}
+#
+#testKillSIGABRT() {
+#  assertEquals  "kill" "Aborted"  "$(timeout -s 6 0.2 ${ROOT_DIR}/bin/check gemini://test.shit.cx 2>&1)"
+#  assertFalse   "still locked"    "_locked"
+#}
 
 # TODO: work out how to test this...
 #testCleanExit() {
