@@ -16,7 +16,7 @@ _is_down()      { ! _is_up; }
 _was_up()       { [[ $(tail -n1 "${RUNDIR}/last_state") -eq 20 ]]; }
 _was_down()     { ! _was_up; }
 _last_success() { eval $(stat -s "${RUNDIR}/last_success"); echo ${st_mtime}; }
-_print_date()   { date -u -r $1 +%Y-%m-%dT%H:%M:%S%z; }
+_print_date()   { [[ $# -eq 1 ]] && OPTS="-r $1"; set +u; date -u ${OPTS} +%Y-%m-%dT%H:%M:%S%z; set -u; }
 _test_target()  { _gemini_status_code >> "${RUNDIR}/state"; }
 _check_dep()    { command -v "$1" &>/dev/null || _error "$1: command not found"; }
 _error()        { echo -e "$@" >&2 && exit 1; }
@@ -59,7 +59,7 @@ for ((i=0;i<RECHECKS;i++)); do
 done
 
 if _is_up && _was_down; then
-  echo "${TARGET} has recovered since failing at $(_print_date "@$(_last_success)")"
+  echo "${TARGET} has recovered since failing at $(_print_date $(_last_success))"
 elif _is_down && _was_up; then
   echo "${TARGET} has entered an alarm state at $(_print_date)"
 fi
