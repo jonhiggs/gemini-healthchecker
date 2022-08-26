@@ -68,7 +68,7 @@ touch "${RUNDIR}/state"
 for ((i=0;i<RECHECKS;i++)); do
   _test_target
   _is_up && touch "${RUNDIR}/last_success" && break
-  echo "${TARGET} has failed to respond" | _ntfy "Retrying" "low"
+  echo "${TARGET} has failed to respond. Will retry in ${RECHECK_INTERVAL} seconds" | _ntfy "Retrying" "low"
   sleep "${RECHECK_INTERVAL}"
 done
 
