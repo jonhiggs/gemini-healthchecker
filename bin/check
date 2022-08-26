@@ -37,7 +37,7 @@ _gemini_status_code() {
 [[ $# -eq 0 ]] || [[ $# -gt 4 ]] && _usage && exit 1
 [[ "$*" =~ --help ]]             && _usage && exit 0
 [[ ${TARGET} =~ ^gemini:// ]]    || _error "TARGET must have a gemini protocol"
-[[ -z ${MAILTO} ]]               || _error "MAILTO was not provided"
+[[ -z ${MAILTO} ]]               && _error "MAILTO was not provided"
 
 mkdir -p "${RUNDIR}"
 if _locked; then
