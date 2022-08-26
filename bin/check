@@ -8,6 +8,7 @@ PORT="$(echo "${TARGET}" | cut -d/ -f3 | awk -F: '(NF==2){print $2} (NF==1){prin
 REMOTE_PATH="/$(echo ${TARGET} | cut -d/ -f4-)"
 RUNDIR="${RUNDIR:-${HOME}/.local/share/gemini-healthchecker/${HOST}:${PORT}}"
 MAILFROM="healthchecker@shit.cx"
+NTFY_TOPIC="gemini-healthchecker"
 
 set -euo pipefail
 
@@ -25,6 +26,15 @@ _locked()       { [[ -f "${RUNDIR}/lock" ]]; }
 _lock()         { touch "${RUNDIR}/lock"; }
 _unlock()       { rm -f "${RUNDIR}/lock"; }
 _mail()         { cat | mail -r "${MAILFROM}" -s "$1" "${MAILTO}"; }
+
+_ntfy() {
+  [[ -z ${NTFY_TOPIC} ]] && return 0 ]]
+  cat \
+    | curl \
+      -H "Title: $1" \
+      -H "Priority: ${2:-urgent}" \
+      -d @- ntfy.sh/${NTFY_TOPIC}
+}
 
 _gemini_status_code() {
   _check_dep "gemget"
@@ -58,15 +68,18 @@ touch "${RUNDIR}/state"
 for ((i=0;i<RECHECKS;i++)); do
   _test_target
   _is_up && touch "${RUNDIR}/last_success" && break
+  echo "${TARGET} has failed to respond" | _ntfy "Retrying" "low"
   sleep "${RECHECK_INTERVAL}"
 done
 
 if _is_up && _was_down; then
   echo "${TARGET} has recovered since failing at $(_print_date $(_last_success))" \
     | _mail "${TARGET} has recovered"
+  echo "${TARGET} has recovered" | _ntfy "Recovery" "low"
 elif _is_down && _was_up; then
   echo "${TARGET} has entered an alarm state at $(_print_date)" \
     | _mail "${TARGET} has failed"
+  echo "${TARGET} has failed" | _ntfy "Failure" "urgent"
 fi
 
 _unlock
