@@ -20,7 +20,7 @@ echo '```'
 echo '```'
 
 echo
-echo -e "=> https://github.com/jonhiggs/gemini-healthchecker The source to run your own gemini-healthchecker can be found at https://git.sr.ht/~jonhiggs/gemini-healthchecker/.\\n"
+echo -e "=> https://github.com/jonhiggs/gemini-healthchecker The source to run your own gemini-healthchecker can be found at https://github.com/jonhiggs/gemini-healthchecker/.\\n"
 echo "This page was generated at $(date -u ${OPTS} +%Y-%m-%dT%H:%M:%S%z)."
 
 exit 0
