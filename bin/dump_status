@@ -3,7 +3,14 @@ RUNDIR="${RUNDIR:-${HOME}/.local/share/gemini-healthchecker}"
 
 _target() { echo "gemini://$(basename "$1" | sed 's/:1965$//g')/"; }
 _last_test() { eval $(stat -s "$1/state"); _age ${st_mtime}; }
-_last_success() { eval $(stat -s "$1/last_success"); _age ${st_mtime}; }
+_last_success() {
+  if [[ -f "$1/last_success" ]]; then
+    eval $(stat -s "$1/last_success")
+    _age ${st_mtime}
+  else
+    echo -1
+  fi
+}
 _state() { [[ "$(tail -n1 "$1/state")" -eq 20 ]] && echo OK || echo FAIL; }
 _age() { echo $(( $(date +%s) - $1 ))s ago; }
 
