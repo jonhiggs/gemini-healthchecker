@@ -33,7 +33,8 @@ _ntfy() {
     | curl \
       -H "Title: $1" \
       -H "Priority: ${2:-urgent}" \
-      -d @- ntfy.sh/${NTFY_TOPIC}
+      -d @- ntfy.sh/${NTFY_TOPIC} \
+      2>&1 > /dev/null
 }
 
 _gemini_status_code() {
