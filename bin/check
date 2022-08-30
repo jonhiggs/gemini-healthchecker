@@ -34,7 +34,7 @@ _ntfy() {
       -H "Title: $1" \
       -H "Priority: ${2:-urgent}" \
       -d @- ntfy.sh/${NTFY_TOPIC} \
-      2>&1 > /dev/null
+      > /dev/null 2>&1
 }
 
 _gemini_status_code() {
