@@ -70,7 +70,9 @@ _was_down && RECHECKS=1
 for ((i=1;i<=RECHECKS;i++)); do
   _test_target
   _is_up && touch "${RUNDIR}/last_success" && break
-  echo "${TARGET} failed to respond within timeout of ${TIMEOUT} seconds. Will retry in ${RECHECK_INTERVAL} seconds." | _ntfy "Attempt $i/${RECHECKS}" "low"
+  if _is_down && _was_up; then
+    echo "${TARGET} failed to respond within timeout of ${TIMEOUT} seconds. Will retry in ${RECHECK_INTERVAL} seconds." | _ntfy "Attempt $i/${RECHECKS}" "low"
+  fi
   sleep "${RECHECK_INTERVAL}"
 done
 
