@@ -66,6 +66,7 @@ else
 fi
 touch "${RUNDIR}/state"
 
+_was_down && RECHECKS=1
 for ((i=1;i<=RECHECKS;i++)); do
   _test_target
   _is_up && touch "${RUNDIR}/last_success" && break
